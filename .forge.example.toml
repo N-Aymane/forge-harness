@@ -1,0 +1,3 @@
+# Optional workspace preferences. Copy to .forge.toml.
+# Provider URLs, keys, shells, and approval settings are not accepted here.
+instructions = "Use the project's existing conventions. Run relevant tests after changes."

@@ -1,0 +1,44 @@
+# Copy this file to the config path printed by `forge doctor`.
+# Set actual model IDs and context/output limits supported by your account.
+# Prices are optional, deliberately absent until you verify them with the provider.
+# 1 USD per million tokens = 1000 nano-USD per token.
+default_model = "primary"
+# shell = "/bin/bash" # Windows defaults to powershell.exe
+
+[models.primary]
+provider = "openai"
+model = "REPLACE_WITH_MODEL_ID"
+base_url = "https://api.openai.com/v1"
+key_env = "OPENAI_API_KEY"
+context_tokens = 128000
+max_output_tokens = 4096
+# Remove key_env to use `forge auth add primary` and the OS credential store.
+
+# Uncomment and replace each value with verified current pricing:
+# [models.primary.pricing]
+# input_nusd_per_token = 1000
+# output_nusd_per_token = 4000
+# cached_input_nusd_per_token = 100
+
+[models.claude]
+provider = "anthropic"
+model = "REPLACE_WITH_MODEL_ID"
+base_url = "https://api.anthropic.com/v1"
+key_env = "ANTHROPIC_API_KEY"
+context_tokens = 200000
+max_output_tokens = 4096
+# Anthropic cache writes are charged separately. Include their rate when pricing:
+# [models.claude.pricing]
+# input_nusd_per_token = 1000
+# output_nusd_per_token = 4000
+# cached_input_nusd_per_token = 100
+# cache_write_nusd_per_token = 1250
+
+[models.local]
+provider = "compatible"
+model = "REPLACE_WITH_LOCAL_MODEL_ID"
+base_url = "http://127.0.0.1:1234/v1"
+key_env = "LOCAL_MODEL_API_KEY" # Set to a placeholder if the local server needs none.
+context_tokens = 32768
+max_output_tokens = 2048
+# Explicit zero pricing is allowed for a genuinely free local model.

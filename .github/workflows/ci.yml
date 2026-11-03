@@ -1,0 +1,62 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config fonts-dejavu-core
+      - if: runner.os == 'Linux'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - if: runner.os != 'Linux'
+        run: cargo test --locked --all-targets
+      - if: runner.os == 'Linux'
+        run: |
+          set -o pipefail
+          cargo test --locked --all-targets 2>&1 | tee target/test-results.txt
+      - if: runner.os == 'Linux'
+        run: |
+          python3 -m pip install -r tests/requirements-screenshots.txt
+          python3 tests/tui_smoke.py target/debug/forge --screenshots target/screenshots
+          python3 tests/render_test_log.py target/test-results.txt target/screenshots/05-test-results.png
+          cp target/test-results.txt target/screenshots/test-results.txt
+      - if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: forge-test-screenshots
+          path: target/screenshots/
+      - run: cargo build --locked --release
+      - if: runner.os != 'Windows'
+        run: tar -czf forge-${{ runner.os }}-${{ runner.arch }}.tar.gz -C target/release forge -C ../.. README.md config.example.toml LICENSE
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path target/release/forge.exe,README.md,config.example.toml,LICENSE -DestinationPath forge-Windows-${{ runner.arch }}.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forge-${{ runner.os }}-${{ runner.arch }}
+          path: |
+            forge-*.tar.gz
+            forge-*.zip
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.88.0
+      - run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
+      - run: cargo check --locked --all-targets
