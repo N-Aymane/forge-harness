@@ -17,7 +17,7 @@ A Rust coding agent with a full-screen terminal interface, explicit edit/command
 - OS credential-store integration, resumable local sessions, and an SQLite usage ledger.
 - Integer cost estimates, transactional session/project/daily budgets, uncertain-charge reconciliation, and approved context summarization.
 
-The initial Linux validation passed 31 Rust tests, the real-terminal approval/resize/cleanup smoke test, Clippy on Rust 1.88 and stable, and Linux/Windows release builds. See [current CI runs](https://github.com/N-Aymane/forge-harness/actions) for native platform results. Real paid-provider tests are opt-in.
+Validation passed 31 active Linux Rust tests, the real-terminal approval/resize/cleanup smoke test, and Clippy on Rust 1.88 and stable. Native Windows, Linux, and macOS CI passed their test suites, Clippy, and optimized release builds. See [CI results and binary artifacts](https://github.com/N-Aymane/forge-harness/actions/runs/41736340060). Real paid-provider tests are opt-in.
 
 ## Build and configure
 
