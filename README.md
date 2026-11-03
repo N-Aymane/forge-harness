@@ -6,6 +6,10 @@ A Rust coding agent with a full-screen terminal interface, explicit edit/command
 
 **Start here:** [Detailed setup guide](docs/SETUP.md) · [Test screenshots and evidence](docs/SCREENSHOTS.md) · [Validation report](VALIDATION.md)
 
+![Forge terminal after an approved file change, captured from the actual automated test](docs/images/04-complete.png)
+
+*Actual terminal-test capture with a deterministic local mock provider; no paid model API call.*
+
 ## What is implemented
 
 - Keyboard-driven TUI and scriptable CLI with versioned JSONL events.

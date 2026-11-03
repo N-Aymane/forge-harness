@@ -1,0 +1,8 @@
+{
+  "title": "Forge / review a proposed file change before approval",
+  "source": "captured terminal bytes from the real Forge test",
+  "columns": 120,
+  "rows": 35,
+  "ansi_sha256": "70d0b8681750bea837f6ad830d15fcf3055ddeffa7b5640f55236a4bbc4f4c5b",
+  "renderer": "pyte terminal emulator and Pillow; fixed dark terminal theme"
+}

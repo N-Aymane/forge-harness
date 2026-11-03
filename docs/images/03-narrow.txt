@@ -1,0 +1,20 @@
+ FORGE  / mock · /tmp/tmp2jm3ofpn                           
+   ┌ Review action ─────────────────────────────────────┐   
+┌ C│Apply file change: approved.txt                     │──┐
+│De│                                                    │  │
+│th│y approve · n deny · ↑/↓ scroll                     │  │
+│th│                                                    │  │
+│  │--- a/approved.txt                                  │  │
+│Ct│+++ b/approved.txt                                  │  │
+│  │@@ -0,0 +1 @@                                       │  │
+│YO│+approved                                           │  │
+│cr│                                                    │  │
+│  │                                                    │  │
+│FO│                                                    │  │
+│  │                                                    │  │
+│  │                                                    │  │
+└──│                                                    │──┘
+┌ D│                                                    │──┐
+│  └────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
+ Approval required · y approve · n deny · c1dfcf63 · Ctrl+P 

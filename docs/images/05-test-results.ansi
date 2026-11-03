@@ -1,0 +1,276 @@
+[1m[92m   Compiling[0m cfg-if v1.0.5
+[1m[92m   Compiling[0m libc v0.2.191
+[1m[92m   Compiling[0m smallvec v1.16.4
+[1m[92m   Compiling[0m log v0.4.35
+[1m[92m   Compiling[0m once_cell v1.21.4
+[1m[92m   Compiling[0m zerofrom v0.1.8
+[1m[92m   Compiling[0m stable_deref_trait v1.2.1
+[1m[92m   Compiling[0m typenum v1.20.1
+[1m[92m   Compiling[0m futures-core v0.3.34
+[1m[92m   Compiling[0m yoke v0.8.4
+[1m[92m   Compiling[0m pin-project-lite v0.2.17
+[1m[92m   Compiling[0m scopeguard v1.2.0
+[1m[92m   Compiling[0m zerovec v0.11.9
+[1m[92m   Compiling[0m lock_api v0.4.14
+[1m[92m   Compiling[0m bytes v1.12.1
+[1m[92m   Compiling[0m errno v0.3.14
+[1m[92m   Compiling[0m generic-array v0.14.7
+[1m[92m   Compiling[0m parking_lot_core v0.9.12
+[1m[92m   Compiling[0m signal-hook-registry v1.4.8
+[1m[92m   Compiling[0m mio v1.2.4
+[1m[92m   Compiling[0m itoa v1.0.18
+[1m[92m   Compiling[0m parking_lot v0.12.5
+[1m[92m   Compiling[0m serde_core v1.0.229
+[1m[92m   Compiling[0m subtle v2.6.1
+[1m[92m   Compiling[0m zeroize v1.9.1
+[1m[92m   Compiling[0m num-traits v0.2.19
+[1m[92m   Compiling[0m crypto-common v0.1.7
+[1m[92m   Compiling[0m socket2 v0.6.5
+[1m[92m   Compiling[0m tinystr v0.8.5
+[1m[92m   Compiling[0m utf_types v1.0.0
+[1m[92m   Compiling[0m writeable v0.6.4
+[1m[92m   Compiling[0m litemap v0.8.3
+[1m[92m   Compiling[0m memchr v2.8.3
+[1m[92m   Compiling[0m utf8_iter v1.1.0
+[1m[92m   Compiling[0m icu_locale_core v2.4.0
+[1m[92m   Compiling[0m tokio v1.54.1
+[1m[92m   Compiling[0m potential_utf v0.1.6
+[1m[92m   Compiling[0m zerotrie v0.2.5
+[1m[92m   Compiling[0m bitflags v2.13.2
+[1m[92m   Compiling[0m serde v1.0.229
+[1m[92m   Compiling[0m icu_provider v2.4.0
+[1m[92m   Compiling[0m icu_collections v2.4.0
+[1m[92m   Compiling[0m http v1.5.0
+[1m[92m   Compiling[0m strsim v0.11.1
+[1m[92m   Compiling[0m percent-encoding v2.3.2
+[1m[92m   Compiling[0m icu_properties_data v2.4.0
+[1m[92m   Compiling[0m icu_normalizer_data v2.4.0
+[1m[92m   Compiling[0m num-integer v0.1.47
+[1m[92m   Compiling[0m rustls-pki-types v1.15.1
+[1m[92m   Compiling[0m http-body v1.1.0
+[1m[92m   Compiling[0m block-buffer v0.10.4
+[1m[92m   Compiling[0m block-padding v0.3.3
+[1m[92m   Compiling[0m getrandom v0.2.17
+[1m[92m   Compiling[0m tracing-core v0.1.36
+[1m[92m   Compiling[0m slab v0.4.12
+[1m[92m   Compiling[0m equivalent v1.0.3
+[1m[92m   Compiling[0m futures-task v0.3.34
+[1m[92m   Compiling[0m untrusted v0.9.0
+[1m[92m   Compiling[0m futures-util v0.3.34
+[1m[92m   Compiling[0m ring v0.17.14
+[1m[92m   Compiling[0m inout v0.1.4
+[1m[92m   Compiling[0m digest v0.10.7
+[1m[92m   Compiling[0m icu_normalizer v2.4.0
+[1m[92m   Compiling[0m icu_properties v2.4.0
+[1m[92m   Compiling[0m aho-corasick v1.1.5
+[1m[92m   Compiling[0m try-lock v0.2.5
+[1m[92m   Compiling[0m tower-service v0.3.3
+[1m[92m   Compiling[0m regex-syntax v0.8.11
+[1m[92m   Compiling[0m darling_core v0.24.1
+[1m[92m   Compiling[0m regex-automata v0.4.18
+[1m[92m   Compiling[0m want v0.3.2
+[1m[92m   Compiling[0m tracing v0.1.44
+[1m[92m   Compiling[0m idna_adapter v1.2.2
+[1m[92m   Compiling[0m rustls-webpki v0.103.16
+[1m[92m   Compiling[0m cipher v0.4.4
+[1m[92m   Compiling[0m zerocopy v0.8.63
+[1m[92m   Compiling[0m httparse v1.10.1
+[1m[92m   Compiling[0m num-bigint v0.4.8
+[1m[92m   Compiling[0m form_urlencoded v1.2.2
+[1m[92m   Compiling[0m ryu v1.0.23
+[1m[92m   Compiling[0m atomic-waker v1.1.2
+[1m[92m   Compiling[0m utf8parse v0.2.2
+[1m[92m   Compiling[0m cpufeatures v0.2.17
+[1m[92m   Compiling[0m anstyle-parse v1.0.0
+[1m[92m   Compiling[0m hyper v1.12.0
+[1m[92m   Compiling[0m num-rational v0.4.2
+[1m[92m   Compiling[0m darling_macro v0.24.1
+[1m[92m   Compiling[0m rustls v0.23.46
+[1m[92m   Compiling[0m idna v1.1.0
+[1m[92m   Compiling[0m ahash v0.8.12
+[1m[92m   Compiling[0m libdbus-sys v0.2.7
+[1m[92m   Compiling[0m crossbeam-utils v0.8.23
+[1m[92m   Compiling[0m signal-hook v0.3.18
+[1m[92m   Compiling[0m hmac v0.12.1
+[1m[92m   Compiling[0m num-iter v0.1.46
+[1m[92m   Compiling[0m num-complex v0.4.6
+[1m[92m   Compiling[0m sync_wrapper v1.0.2
+[1m[92m   Compiling[0m futures-channel v0.3.34
+[1m[92m   Compiling[0m is_terminal_polyfill v1.70.2
+[1m[92m   Compiling[0m ipnet v2.12.2
+[1m[92m   Compiling[0m colorchoice v1.0.5
+[1m[92m   Compiling[0m anstyle-query v1.1.5
+[1m[92m   Compiling[0m tower-layer v0.3.3
+[1m[92m   Compiling[0m either v1.19.0
+[1m[92m   Compiling[0m hashbrown v0.17.1
+[1m[92m   Compiling[0m allocator-api2 v0.2.21
+[1m[92m   Compiling[0m base64 v0.23.1
+[1m[92m   Compiling[0m foldhash v0.1.5
+[1m[92m   Compiling[0m linux-raw-sys v0.4.15
+[1m[92m   Compiling[0m anstyle v1.0.14
+[1m[92m   Compiling[0m fastrand v2.5.0
+[1m[92m   Compiling[0m rustix v0.38.44
+[1m[92m   Compiling[0m anstream v1.0.0
+[1m[92m   Compiling[0m hyper-util v0.1.21
+[1m[92m   Compiling[0m indexmap v2.14.2
+[1m[92m   Compiling[0m tokio-rustls v0.26.6
+[1m[92m   Compiling[0m hashbrown v0.15.5
+[1m[92m   Compiling[0m itertools v0.13.0
+[1m[92m   Compiling[0m tower v0.5.3
+[1m[92m   Compiling[0m num v0.4.3
+[1m[92m   Compiling[0m hkdf v0.12.4
+[1m[92m   Compiling[0m crossbeam-epoch v0.9.21
+[1m[92m   Compiling[0m signal-hook-mio v0.2.5
+[1m[92m   Compiling[0m hashbrown v0.14.5
+[1m[92m   Compiling[0m dbus v0.9.12
+[1m[92m   Compiling[0m url v2.5.8
+[1m[92m   Compiling[0m darling v0.24.1
+[1m[92m   Compiling[0m zmij v1.0.23
+[1m[92m   Compiling[0m getrandom v0.4.3
+[1m[92m   Compiling[0m aes v0.8.4
+[1m[92m   Compiling[0m sha2 v0.10.9
+[1m[92m   Compiling[0m cbc v0.1.2
+[1m[92m   Compiling[0m castaway v0.2.4
+[1m[92m   Compiling[0m webpki-roots v1.0.11
+[1m[92m   Compiling[0m serde_spanned v0.6.9
+[1m[92m   Compiling[0m toml_datetime v0.6.11
+[1m[92m   Compiling[0m bstr v1.13.1
+[1m[92m   Compiling[0m lazy_static v1.5.1
+[1m[92m   Compiling[0m same-file v1.0.6
+[1m[92m   Compiling[0m unicode-segmentation v1.13.3
+[1m[92m   Compiling[0m futures-sink v0.3.34
+[1m[92m   Compiling[0m unicode-width v0.1.14
+[1m[92m   Compiling[0m static_assertions v1.1.0
+[1m[92m   Compiling[0m winnow v0.7.15
+[1m[92m   Compiling[0m clap_lex v1.1.1
+[1m[92m   Compiling[0m option-ext v0.2.0
+[1m[92m   Compiling[0m toml_write v0.1.2
+[1m[92m   Compiling[0m clap_builder v4.6.7
+[1m[92m   Compiling[0m dirs-sys v0.5.0
+[1m[92m   Compiling[0m unicode-truncate v1.1.0
+[1m[92m   Compiling[0m compact_str v0.8.2
+[1m[92m   Compiling[0m tokio-util v0.7.20
+[1m[92m   Compiling[0m toml_edit v0.22.27
+[1m[92m   Compiling[0m globset v0.4.21
+[1m[92m   Compiling[0m walkdir v2.5.0
+[1m[92m   Compiling[0m instability v0.3.14
+[1m[92m   Compiling[0m sharded-slab v0.1.7
+[1m[92m   Compiling[0m dbus-secret-service v4.1.0
+[1m[92m   Compiling[0m hyper-rustls v0.27.10
+[1m[92m   Compiling[0m strum v0.26.3
+[1m[92m   Compiling[0m libsqlite3-sys v0.30.1
+[1m[92m   Compiling[0m tower-http v0.6.11
+[1m[92m   Compiling[0m serde_json v1.0.154
+[1m[92m   Compiling[0m hashlink v0.9.1
+[1m[92m   Compiling[0m crossbeam-deque v0.8.8
+[1m[92m   Compiling[0m crossterm v0.28.1
+[1m[92m   Compiling[0m lru v0.12.5
+[1m[92m   Compiling[0m matchers v0.2.0
+[1m[92m   Compiling[0m serde_urlencoded v0.7.1
+[1m[92m   Compiling[0m tracing-log v0.2.0
+[1m[92m   Compiling[0m http-body-util v0.1.5
+[1m[92m   Compiling[0m rtoolbox v0.0.6
+[1m[92m   Compiling[0m thread_local v1.1.10
+[1m[92m   Compiling[0m nu-ansi-term v0.50.3
+[1m[92m   Compiling[0m iana-time-zone v0.1.65
+[1m[92m   Compiling[0m fallible-streaming-iterator v0.1.9
+[1m[92m   Compiling[0m base64 v0.22.1
+[1m[92m   Compiling[0m cassowary v0.3.0
+[1m[92m   Compiling[0m unicode-width v0.2.0
+[1m[92m   Compiling[0m fallible-iterator v0.3.0
+[1m[92m   Compiling[0m ratatui v0.29.0
+[1m[92m   Compiling[0m reqwest v0.12.28
+[1m[92m   Compiling[0m rusqlite v0.32.1
+[1m[92m   Compiling[0m chrono v0.4.45
+[1m[92m   Compiling[0m tracing-subscriber v0.3.23
+[1m[92m   Compiling[0m rpassword v7.5.4
+[1m[92m   Compiling[0m thiserror v2.0.21
+[1m[92m   Compiling[0m clap v4.6.7
+[1m[92m   Compiling[0m ignore v0.4.34
+[1m[92m   Compiling[0m keyring v3.6.3
+[1m[92m   Compiling[0m toml v0.8.23
+[1m[92m   Compiling[0m anyhow v1.0.104
+[1m[92m   Compiling[0m directories v6.0.0
+[1m[92m   Compiling[0m uuid v1.26.1
+[1m[92m   Compiling[0m fs2 v0.4.3
+[1m[92m   Compiling[0m linux-raw-sys v0.12.1
+[1m[92m   Compiling[0m similar v2.7.0
+[1m[92m   Compiling[0m rustix v1.1.6
+[1m[92m   Compiling[0m forge-harness v0.1.0 (/home/runner/work/forge-harness/forge-harness)
+[1m[92m   Compiling[0m tempfile v3.27.0
+[1m[92m    Finished[0m `test` profile [unoptimized + debuginfo] target(s) in 26.62s
+[1m[92m     Running[0m unittests src/lib.rs (target/debug/deps/forge_harness-1aa031a48b3364d1)
+
+running 19 tests
+test accounting::tests::cached_and_reasoning_not_double_counted ... ok
+test accounting::tests::decimal_round_trip_and_overflow ... ok
+test config::tests::endpoints_cannot_smuggle_credentials ... ok
+test providers::tests::empty_usage_is_not_zero_usage ... ok
+test providers::tests::anthropic_usage_is_cumulative ... ok
+test config::tests::project_cannot_override_provider_or_permissions ... ok
+test providers::tests::fragmented_utf8_and_multiline_sse ... ok
+test providers::tests::redaction_across_fragments ... ok
+test providers::tests::fragmented_tool_arguments ... ok
+test storage::tests::history_survives_compaction ... ok
+test storage::tests::session_locks_and_explicit_reconciliation ... ok
+test tools::tests::symlink_escape_is_rejected ... ok
+test storage::tests::concurrent_reservations_and_uncertainty ... ok
+test ui::tests::approval_and_command_palette_render ... ok
+test tools::tests::traversal_and_stale_patch ... ok
+test ui::tests::unicode_composer_edits_at_character_boundaries ... ok
+test ui::tests::normal_and_narrow_layouts ... ok
+test storage::tests::old_unpriced_requests_block_new_budgets_until_resolved ... ok
+test tools::tests::commands_timeout_cancel_and_bound_output ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.31s
+
+[1m[92m     Running[0m unittests src/main.rs (target/debug/deps/forge-1507889ab68ce6e1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[1m[92m     Running[0m tests/agent.rs (target/debug/deps/agent-f54adb65f731de34)
+
+running 8 tests
+test interrupted_stream_keeps_reservation ... ok
+test denied_change_is_not_applied ... ok
+test context_compaction_is_paid_and_keeps_history ... ok
+test coding_flow_approval_execution_followup_and_ledger ... ok
+test missing_usage_is_unknown_not_free ... ok
+test oversized_context_declined_never_calls_provider ... ok
+test unattended_stop_then_resume_never_replays_call ... ok
+test request_limit_stops_a_runaway_tool_loop ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+[1m[92m     Running[0m tests/cli.rs (target/debug/deps/cli-b90e09366087bbd0)
+
+running 2 tests
+test doctor_works_without_keys_or_network ... ok
+test json_run_stops_for_approval_without_writing ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+[1m[92m     Running[0m tests/http.rs (target/debug/deps/http-22ddf454b6742f22)
+
+running 1 test
+test adapters_send_valid_tools_and_redact_fragmented_keys ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+[1m[92m     Running[0m tests/ledger_process.rs (target/debug/deps/ledger_process-eaed78fe37f4eccc)
+
+running 2 tests
+test reservation_worker ... ignored, helper invoked by the parent test
+test two_processes_cannot_reserve_the_same_balance ... ok
+
+test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+[1m[92m     Running[0m tests/live.rs (target/debug/deps/live-16d11b3469a490ec)
+
+running 1 test
+test live_provider_smoke ... ignored, paid API request; set FORGE_LIVE_CONFIG and FORGE_LIVE_MODEL explicitly
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

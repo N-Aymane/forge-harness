@@ -1,0 +1,35 @@
+ FORGE  / mock · /tmp/tmp2jm3ofpn                                                                                       
+                                                                                                                        
+┌ Conversation ────────────────────────────────────────────────────────────────────────┐┌ Activity ────────────────────┐
+│FORGE                                                                                 ││write_file · pty-write        │
+│                                                                                      ││                              │
+│Your repository. Your models. Visible spending.                                       ││                              │
+│                                                                                      ││                              │
+│Describe a change or ask a question. Forge will inspect the workspace,                ││                              │
+│then ask before applying edits or running commands.                                   ││                              │
+│                                                                                      ││                              │
+│Ctrl+P commands   Alt+Enter newline   Tab panels                                      ││                              │
+│                                                                                      ││                              │
+│YOU                                                                                   ││                              │
+│create approved.txt                                                                   ││                              │
+│                                                                                      ││                              │
+│FORGE                                                                                 ││                              │
+│PTY smoke complete                                                                    ││                              │
+│                                                                                      │└──────────────────────────────┘
+│                                                                                      │┌ Request usage · USD estimate ┐
+│                                                                                      ││10 input                      │
+│                                                                                      ││10 output                     │
+│                                                                                      ││0 cached                      │
+│                                                                                      ││0 reasoning                   │
+│                                                                                      ││                              │
+│                                                                                      ││Cost: unpriced                │
+│                                                                                      ││Reserved: unpriced            │
+│                                                                                      ││                              │
+│                                                                                      ││                              │
+│                                                                                      ││                              │
+│                                                                                      ││                              │
+└──────────────────────────────────────────────────────────────────────────────────────┘└──────────────────────────────┘
+┌ Message · Enter sends · Alt+Enter newline ───────────────────────────────────────────────────────────────────────────┐
+│                                                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ complete · c1dfcf63 · Ctrl+P commands · PgUp/PgDn scroll                                                               

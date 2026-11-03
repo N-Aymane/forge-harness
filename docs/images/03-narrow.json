@@ -1,0 +1,8 @@
+{
+  "title": "Forge / 60-column approval dialog / actual terminal resize",
+  "source": "captured terminal bytes from the real Forge test",
+  "columns": 60,
+  "rows": 20,
+  "ansi_sha256": "773950fad0d66118b7d2265baa2e7eed53f590c30af96eb5c1600d3f3d07c4fb",
+  "renderer": "pyte terminal emulator and Pillow; fixed dark terminal theme"
+}

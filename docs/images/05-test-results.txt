@@ -1,0 +1,42 @@
+test interrupted_stream_keeps_reservation ... ok                                                                        
+test denied_change_is_not_applied ... ok                                                                                
+test context_compaction_is_paid_and_keeps_history ... ok                                                                
+test coding_flow_approval_execution_followup_and_ledger ... ok                                                          
+test missing_usage_is_unknown_not_free ... ok                                                                           
+test oversized_context_declined_never_calls_provider ... ok                                                             
+test unattended_stop_then_resume_never_replays_call ... ok                                                              
+test request_limit_stops_a_runaway_tool_loop ... ok                                                                     
+                                                                                                                        
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s                           
+                                                                                                                        
+     Running tests/cli.rs (target/debug/deps/cli-b90e09366087bbd0)                                                      
+                                                                                                                        
+running 2 tests                                                                                                         
+test doctor_works_without_keys_or_network ... ok                                                                        
+test json_run_stops_for_approval_without_writing ... ok                                                                 
+                                                                                                                        
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s                           
+                                                                                                                        
+     Running tests/http.rs (target/debug/deps/http-22ddf454b6742f22)                                                    
+                                                                                                                        
+running 1 test                                                                                                          
+test adapters_send_valid_tools_and_redact_fragmented_keys ... ok                                                        
+                                                                                                                        
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s                           
+                                                                                                                        
+     Running tests/ledger_process.rs (target/debug/deps/ledger_process-eaed78fe37f4eccc)                                
+                                                                                                                        
+running 2 tests                                                                                                         
+test reservation_worker ... ignored, helper invoked by the parent test                                                  
+test two_processes_cannot_reserve_the_same_balance ... ok                                                               
+                                                                                                                        
+test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s                           
+                                                                                                                        
+     Running tests/live.rs (target/debug/deps/live-16d11b3469a490ec)                                                    
+                                                                                                                        
+running 1 test                                                                                                          
+test live_provider_smoke ... ignored, paid API request; set FORGE_LIVE_CONFIG and FORGE_LIVE_MODEL explicitly           
+                                                                                                                        
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s                           
+                                                                                                                        
+                                                                                                                        

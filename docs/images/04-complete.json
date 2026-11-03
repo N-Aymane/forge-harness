@@ -1,0 +1,8 @@
+{
+  "title": "Forge / approved file written / follow-up and usage visible",
+  "source": "captured terminal bytes from the real Forge test",
+  "columns": 120,
+  "rows": 35,
+  "ansi_sha256": "49ed2b0ec7900450bf3d7aaa870057fb8c069e1070d8f45ce1ea3c833df5a549",
+  "renderer": "pyte terminal emulator and Pillow; fixed dark terminal theme"
+}

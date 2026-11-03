@@ -198,6 +198,18 @@ Type a task such as: `Inspect this repository and propose a small README improve
 
 The terminal images in [the screenshot walkthrough](SCREENSHOTS.md) come from the actual automated PTY test. The test uses a deterministic local provider, so no paid provider is being represented as tested by those images.
 
+![Forge startup screen from the terminal test](images/01-start.png)
+
+The test proposes a new file and verifies that it does not exist before approval. This is the actual diff dialog before the test presses `y`:
+
+![Reviewing a proposed write before approval](images/02-approval.png)
+
+The same running session is resized to 60 columns, then returns to the wide view after approval:
+
+![Narrow terminal approval dialog](images/03-narrow.png)
+
+![Completed approved turn with usage visible](images/04-complete.png)
+
 ## 6. Configure pricing and spending limits
 
 Without configured pricing, costs display **unpriced**. Token usage can still be recorded. A monetary budget blocks an unpriced model rather than treating it as free.
@@ -298,6 +310,10 @@ python3 tests/render_test_log.py target/test-results.txt target/screenshots/05-t
 In an externally managed system Python, use a virtual environment before installing the optional screenshot dependencies. The CI workflow uses a dedicated Python environment. `FORGE_SCREENSHOT_FONT` can select another monospace TrueType font when using the renderer elsewhere.
 
 The screenshots are PNG renderings of the captured terminal byte stream, interpreted by pyte with a fixed dark theme and drawn by Pillow. Each image has matching `.ansi`, `.txt`, and `.json` evidence, including a SHA-256 hash of the original terminal bytes. They are not generated UI mockups.
+
+![Actual Cargo test output from the publication CI run](images/05-test-results.png)
+
+[Full captured Cargo output](images/test-results.txt) · [Capture provenance](images/provenance.json) · [CI run](https://github.com/N-Aymane/forge-harness/actions/runs/41736340060)
 
 GitHub Actions builds/tests Windows, Linux, and macOS; checks the MSRV; captures the Linux terminal walkthrough; and uploads screenshots and binary archives. Optional real-provider tests are disabled by default and require explicit config/model selection, configured pricing, and a $0.01 local reservation budget. See `tests/live.rs`.
 

@@ -1,0 +1,8 @@
+{
+  "title": "Forge / actual cargo test --locked --all-targets output (tail)",
+  "source": "captured terminal bytes from the real Forge test",
+  "columns": 120,
+  "rows": 42,
+  "ansi_sha256": "1f040568e5d312e04c23921b8b312ad5214ec6796a3ce3c9d23192acade682ec",
+  "renderer": "pyte terminal emulator and Pillow; fixed dark terminal theme"
+}

@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/N-Aymane/forge-harness",
+  "source_commit": "f71d346a41c3fb780bf09376aa108227ac325c1c",
+  "workflow_run": "https://github.com/N-Aymane/forge-harness/actions/runs/41736340060",
+  "artifact_name": "forge-test-screenshots",
+  "artifact_id": 13278742257,
+  "artifact_digest": "sha256:7bf40e55212e8e3c8925491f18d5f1b69369dcc6c1df6d7995c21395875864ba",
+  "capture_platform": "GitHub Actions ubuntu-latest",
+  "provider": "deterministic local HTTP fixture; no paid API call",
+  "method": "real POSIX PTY bytes interpreted with pyte and rendered with Pillow using a fixed dark terminal theme",
+  "evidence": "Each PNG has matching ANSI bytes, screen text, and JSON metadata containing the ANSI SHA-256 hash"
+}

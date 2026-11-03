@@ -1,0 +1,8 @@
+{
+  "title": "Forge / startup / real PTY test with a local mock provider",
+  "source": "captured terminal bytes from the real Forge test",
+  "columns": 120,
+  "rows": 35,
+  "ansi_sha256": "0724b3360549dcb1d6f5b424d5f188248ae6b89740aac5e344f79d7270ffde94",
+  "renderer": "pyte terminal emulator and Pillow; fixed dark terminal theme"
+}
