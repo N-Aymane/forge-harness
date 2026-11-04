@@ -100,6 +100,12 @@ def main():
         try:
             until(lambda: b"Message" in captured)
             screenshot("01-start.png", "Forge / startup / real PTY test with a local mock provider")
+            os.write(master, b"/us")
+            until(lambda: b"/usage" in captured)
+            screenshot("06-commands.png", "Forge / filtered slash commands in the composer")
+            os.write(master, b"\r")
+            until(lambda: b"No requests yet" in captured)
+            assert Provider.calls == 0
             os.write(master, b"create approved.txt\r")
             until(lambda: b"Review action" in captured)
             screenshot("02-approval.png", "Forge / review a proposed file change before approval")
