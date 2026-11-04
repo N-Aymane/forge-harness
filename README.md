@@ -6,9 +6,9 @@ A Rust coding agent with a full-screen terminal interface, explicit edit/command
 
 **Start here:** [Detailed setup guide](docs/SETUP.md) · [Test screenshots and evidence](docs/SCREENSHOTS.md) · [Validation report](VALIDATION.md)
 
-![Forge terminal after an approved file change, captured from the actual automated test](docs/images/04-complete.png)
+![Forge home screen with the block-letter wordmark, anvil, and dark composer](docs/images/forge-home.png)
 
-*Actual terminal-test capture with a deterministic local mock provider; no paid model API call.*
+*Home screen captured from the automated terminal test with a local mock provider.*
 
 ## What is implemented
 
@@ -62,12 +62,17 @@ The main conversation and multiline composer sit beside collapsible activity and
 | Paste | Paste multiline input |
 | Backspace / Ctrl+U | Delete last character / clear composer |
 | Ctrl+P | Command palette |
+| / | Filter local commands from the beginning of the composer |
 | Tab | Toggle activity and usage panels |
 | Page Up / Page Down | Scroll conversation |
 | y / n | Approve / deny the current action |
 | Up / Down | Scroll the approval preview |
 | Esc | Deny approval, close palette, or cancel current turn |
 | Ctrl+C | Cancel while running; exit while idle |
+
+Type `/` to open the command list, use the arrow keys to choose a command, and press Enter to run it. The menu includes `/panels`, `/usage`, `/cancel`, and `/quit`. Esc closes the menu.
+
+![Forge slash command menu filtered to the usage command](docs/images/forge-slash-commands.png)
 
 Approval dialogs show a unified diff or the exact shell, command, directory, and timeout. File contents are checked again before a proposed write is applied. Denial returns an explicit result to the model. A turn stops after at most 25 model requests.
 

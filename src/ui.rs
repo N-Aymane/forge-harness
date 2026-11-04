@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use crossterm::{
     event::{
         DisableBracketedPaste, EnableBracketedPaste, Event as TermEvent, EventStream, KeyCode,
-        KeyEventKind, KeyModifiers,
+        KeyEvent, KeyEventKind, KeyModifiers,
     },
     execute,
 };
@@ -78,6 +78,8 @@ struct View {
     busy: bool,
     panels: bool,
     palette: bool,
+    selection: usize,
+    dismiss_slash: bool,
     pending: Option<Pending>,
     scroll: u16,
     status: String,
@@ -96,6 +98,8 @@ impl View {
             busy: false,
             panels: true,
             palette: false,
+            selection: 0,
+            dismiss_slash: false,
             pending: None,
             scroll: 0,
             status: "Ready".into(),
@@ -160,6 +164,8 @@ impl View {
         }
     }
     fn insert(&mut self, text: &str) {
+        self.selection = 0;
+        self.dismiss_slash = false;
         self.input.insert_str(self.cursor, text);
         self.cursor += text.len();
     }
@@ -178,9 +184,112 @@ impl View {
             .unwrap_or(0);
     }
     fn backspace(&mut self) {
+        self.selection = 0;
+        self.dismiss_slash = false;
         let end = self.cursor;
         self.left();
         self.input.drain(self.cursor..end);
+    }
+}
+
+#[derive(Clone, Copy)]
+enum Command {
+    Panels,
+    Usage,
+    Cancel,
+    Quit,
+}
+
+const COMMANDS: [(Command, &str, &str); 4] = [
+    (
+        Command::Panels,
+        "/panels",
+        "Toggle activity and usage panels",
+    ),
+    (Command::Usage, "/usage", "Show latest request usage"),
+    (Command::Cancel, "/cancel", "Cancel the current turn"),
+    (Command::Quit, "/quit", "Exit Forge when idle"),
+];
+
+impl View {
+    fn slash_query(&self) -> Option<&str> {
+        let query = self.input.strip_prefix('/')?;
+        (!query.contains(char::is_whitespace)).then_some(query)
+    }
+
+    fn menu_open(&self) -> bool {
+        self.palette || (!self.dismiss_slash && self.slash_query().is_some())
+    }
+
+    fn commands(&self) -> Vec<(Command, &'static str, &'static str)> {
+        let query = if self.palette {
+            ""
+        } else {
+            self.slash_query().unwrap_or("")
+        };
+        COMMANDS
+            .iter()
+            .copied()
+            .filter(|(_, name, _)| name[1..].starts_with(query))
+            .collect()
+    }
+
+    fn menu_key(&mut self, key: KeyEvent, cancel: &CancellationToken) -> Option<bool> {
+        if !self.menu_open() {
+            return None;
+        }
+        let commands = self.commands();
+        match key.code {
+            KeyCode::Esc => {
+                self.palette = false;
+                self.dismiss_slash = true;
+            }
+            KeyCode::Up => self.selection = self.selection.saturating_sub(1),
+            KeyCode::Down => {
+                self.selection = (self.selection + 1).min(commands.len().saturating_sub(1))
+            }
+            KeyCode::Enter if key.modifiers.is_empty() => {
+                let Some(&(command, _, _)) = commands.get(self.selection) else {
+                    return Some(false);
+                };
+                if !self.palette {
+                    self.input.clear();
+                    self.cursor = 0;
+                }
+                self.palette = false;
+                self.dismiss_slash = true;
+                match command {
+                    Command::Panels => {
+                        self.panels = !self.panels;
+                        self.status = if self.panels {
+                            "Panels enabled"
+                        } else {
+                            "Panels hidden"
+                        }
+                        .into();
+                    }
+                    Command::Usage => {
+                        self.panels = true;
+                        self.status = self
+                            .usage
+                            .lines()
+                            .filter(|line| !line.is_empty())
+                            .collect::<Vec<_>>()
+                            .join(" · ");
+                    }
+                    Command::Cancel => {
+                        if self.busy {
+                            cancel.cancel();
+                        }
+                    }
+                    Command::Quit if !self.busy => return Some(true),
+                    Command::Quit => self.status = "Cancel the current turn before quitting".into(),
+                }
+            }
+            _ if self.palette => {}
+            _ => return None,
+        }
+        Some(false)
     }
 }
 
@@ -202,9 +311,6 @@ pub async fn run(mut agent: Agent, mut rx: mpsc::Receiver<UiMessage>) -> Result<
                 m.text
             ));
         }
-    }
-    if view.transcript.is_empty() {
-        view.transcript="FORGE\n\nYour repository. Your models. Visible spending.\n\nDescribe a change or ask a question. Forge will inspect the workspace,\nthen ask before applying edits or running commands.\n\nCtrl+P commands   Alt+Enter newline   Tab panels\n".into();
     }
     let mut terminal = ratatui::try_init()?;
     let _restore = Restore;
@@ -239,27 +345,28 @@ pub async fn run(mut agent: Agent, mut rx: mpsc::Receiver<UiMessage>) -> Result<
                                 _=>{},
                             }continue;
                         }
-                        if key.modifiers.contains(KeyModifiers::CONTROL)&&key.code==KeyCode::Char('p'){view.palette = !view.palette;continue;}
-                        if view.palette{match key.code{
-                            KeyCode::Esc=>view.palette=false,
-                            KeyCode::Char('1')=>{view.panels = !view.panels;view.palette=false;}
-                            KeyCode::Char('2')=>{agent.cancel.cancel();view.palette=false;}
-                            KeyCode::Char('3') if !view.busy=>break,
-                            _=>{},
-                        }continue;}
+                        if key.modifiers.contains(KeyModifiers::CONTROL)&&key.code==KeyCode::Char('p'){
+                            view.palette = !view.palette;
+                            view.selection = 0;
+                            continue;
+                        }
+                        if let Some(quit) = view.menu_key(key, &agent.cancel) {
+                            if quit { break; }
+                            continue;
+                        }
                         match key.code{
                             KeyCode::Esc if view.busy=>agent.cancel.cancel(),
                             KeyCode::Tab=>view.panels = !view.panels,
                             KeyCode::PageUp=>view.scroll=view.scroll.saturating_add(10),
                             KeyCode::PageDown=>view.scroll=view.scroll.saturating_sub(10),
                             KeyCode::Enter if key.modifiers.intersects(KeyModifiers::ALT|KeyModifiers::SHIFT)=>view.insert("\n"),
-                            KeyCode::Enter if !view.busy&&!view.input.trim().is_empty()=>{
+                            KeyCode::Enter if !view.busy&&view.slash_query().is_none()&&!view.input.trim().is_empty()=>{
                                 let prompt=std::mem::take(&mut view.input);view.cursor=0;view.transcript.push_str(&format!("\nYOU\n{prompt}\n"));view.scroll=0;view.busy=true;
                                 agent.cancel=CancellationToken::new();let worker=agent.clone();
                                 task=Some(tokio::spawn(async move{let _=worker.turn(&prompt).await;}));
                             }
                             KeyCode::Backspace=>view.backspace(),
-                            KeyCode::Delete=>{if view.cursor<view.input.len(){view.input.remove(view.cursor);}}
+                            KeyCode::Delete=>{if view.cursor<view.input.len(){view.input.remove(view.cursor);view.selection=0;view.dismiss_slash=false;}}
                             KeyCode::Left=>view.left(),
                             KeyCode::Right=>view.right(),
                             KeyCode::Home=>view.cursor=view.input[..view.cursor].rfind('\n').map(|i|i+1).unwrap_or(0),
@@ -293,6 +400,14 @@ fn panel(title: &str) -> Block<'_> {
 fn draw(frame: &mut Frame, view: &View) {
     let area = frame.area();
     let composer_height = view.input.lines().count().saturating_add(2).clamp(3, 7) as u16;
+    frame.render_widget(
+        Block::default().style(Style::default().bg(BACKGROUND).fg(FOREGROUND)),
+        area,
+    );
+    if view.transcript.is_empty() {
+        draw_home(frame, view, composer_height);
+        return;
+    }
     let rows = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -353,34 +468,7 @@ fn draw(frame: &mut Frame, view: &View) {
             side[1],
         );
     }
-    let before = &view.input[..view.cursor];
-    let cursor_y = before
-        .bytes()
-        .filter(|b| *b == b'\n')
-        .count()
-        .min(u16::MAX as usize) as u16;
-    let cursor_x = before
-        .rsplit('\n')
-        .next()
-        .unwrap_or("")
-        .width()
-        .min(u16::MAX as usize) as u16;
-    let input_scroll_y = cursor_y.saturating_sub(rows[2].height.saturating_sub(3));
-    let input_scroll_x = cursor_x.saturating_sub(rows[2].width.saturating_sub(3));
-    let input = Paragraph::new(view.input.as_str())
-        .scroll((input_scroll_y, input_scroll_x))
-        .block(panel(if view.busy {
-            " Draft next message "
-        } else {
-            " Message · Enter sends · Alt+Enter newline "
-        }));
-    frame.render_widget(input, rows[2]);
-    if view.pending.is_none() && !view.palette && rows[2].width > 2 && rows[2].height > 2 {
-        frame.set_cursor_position((
-            rows[2].x + 1 + cursor_x - input_scroll_x,
-            rows[2].y + 1 + cursor_y - input_scroll_y,
-        ));
-    }
+    draw_composer(frame, view, rows[2]);
     frame.render_widget(
         Paragraph::new(format!(
             " {} · {} · Ctrl+P commands · PgUp/PgDn scroll",
@@ -403,12 +491,191 @@ fn draw(frame: &mut Frame, view: &View) {
             .scroll((p.scroll, 0)),
             rect,
         );
-    } else if view.palette {
-        let rect = center(area, 65, 40);
-        frame.render_widget(Clear, rect);
-        frame.render_widget(Paragraph::new("1  Toggle activity and usage panels\n2  Cancel current turn\n3  Quit (when idle)\n\nEsc  Close\n\nCLI: forge sessions list · forge usage · forge budget list").block(panel(" Commands ")).wrap(Wrap{trim:false}),rect);
+    } else if view.menu_open() {
+        draw_commands(frame, view, rows[2]);
     }
 }
+
+const BACKGROUND: Color = Color::Rgb(10, 10, 10);
+const SURFACE: Color = Color::Rgb(29, 29, 29);
+const FOREGROUND: Color = Color::Rgb(232, 232, 232);
+const MUTED: Color = Color::Rgb(143, 143, 143);
+const ACCENT: Color = Color::Rgb(103, 159, 241);
+
+// The terminal supplies the glyphs. The lockup uses square block cells so it
+// travels with Forge across terminal fonts and needs no graphics protocol.
+const ANVIL: [&str; 4] = [
+    "▀▀█████████▌  ",
+    "  ▀███████▀   ",
+    "     ███      ",
+    "   ▄█████▄    ",
+];
+const WORDMARK: [&str; 4] = [
+    "█▀▀▀  █▀▀█  █▀▀█  █▀▀▀  █▀▀▀",
+    "█▄▄   █  █  █▄▄█  █ ▄▄  █▄▄ ",
+    "█     █  █  █ ▀▄  █  █  █   ",
+    "▀     ▀▀▀▀  ▀  ▀  ▀▀▀▀  ▀▀▀▀",
+];
+
+fn draw_home(frame: &mut Frame, view: &View, composer_height: u16) {
+    let area = frame.area();
+    let width = area.width.saturating_sub(4).min(94);
+    let large_logo = width >= 44 && area.height >= 14;
+    let logo_height = if large_logo { 4 } else { 1 };
+    let height = logo_height + composer_height + 4;
+    let x = area.x + (area.width - width) / 2;
+    let y = area.y + area.height.saturating_sub(height) * 2 / 5;
+    if large_logo {
+        let lines = ANVIL
+            .iter()
+            .zip(WORDMARK)
+            .map(|(anvil, word)| {
+                Line::from(vec![
+                    Span::styled(*anvil, Style::default().fg(MUTED)),
+                    Span::styled(word, Style::default().fg(FOREGROUND)),
+                ])
+            })
+            .collect::<Vec<_>>();
+        frame.render_widget(
+            Paragraph::new(lines).centered(),
+            Rect::new(x, y, width, logo_height),
+        );
+    } else {
+        frame.render_widget(
+            Paragraph::new("FORGE")
+                .centered()
+                .style(Style::default().fg(FOREGROUND)),
+            Rect::new(x, y, width, 1),
+        );
+    }
+    let composer_y = y + logo_height + 2;
+    let available = area.bottom().saturating_sub(composer_y);
+    let composer = Rect::new(
+        x,
+        composer_y.min(area.bottom()),
+        width,
+        composer_height.min(available),
+    );
+    draw_composer(frame, view, composer);
+    if composer.bottom() < area.bottom() {
+        let hint = if width >= 52 {
+            "/ commands   Ctrl+P palette   Enter send"
+        } else {
+            "/ commands   Enter send"
+        };
+        frame.render_widget(
+            Paragraph::new(hint)
+                .right_aligned()
+                .style(Style::default().fg(MUTED)),
+            Rect::new(x, composer.bottom(), width, 1),
+        );
+    }
+    if composer.bottom().saturating_add(1) < area.bottom() && view.status != "Ready" {
+        frame.render_widget(
+            Paragraph::new(view.status.as_str()).style(Style::default().fg(MUTED)),
+            Rect::new(x, composer.bottom() + 1, width, 1),
+        );
+    }
+    if view.menu_open() {
+        draw_commands(frame, view, composer);
+    }
+}
+
+fn draw_composer(frame: &mut Frame, view: &View, area: Rect) {
+    if area.width < 4 || area.height < 2 {
+        return;
+    }
+    frame.render_widget(Block::default().style(Style::default().bg(SURFACE)), area);
+    frame.render_widget(
+        Paragraph::new(vec![Line::from("▏"); area.height as usize])
+            .style(Style::default().fg(ACCENT)),
+        Rect::new(area.x, area.y, 1, area.height),
+    );
+    let editor = Rect::new(area.x + 2, area.y, area.width - 3, area.height - 1);
+    let before = &view.input[..view.cursor];
+    let cursor_y = before.bytes().filter(|&byte| byte == b'\n').count();
+    let cursor_y = cursor_y.min(u16::MAX as usize) as u16;
+    let cursor_x = before
+        .rsplit('\n')
+        .next()
+        .unwrap_or("")
+        .width()
+        .min(u16::MAX as usize) as u16;
+    let scroll_y = cursor_y.saturating_sub(editor.height - 1);
+    let scroll_x = cursor_x.saturating_sub(editor.width - 1);
+    let text = if view.input.is_empty() {
+        "Message Forge… (/ for commands)"
+    } else {
+        &view.input
+    };
+    let color = if view.input.is_empty() {
+        MUTED
+    } else {
+        FOREGROUND
+    };
+    frame.render_widget(
+        Paragraph::new(text)
+            .style(Style::default().fg(color))
+            .scroll((scroll_y, scroll_x)),
+        editor,
+    );
+    let metadata = Line::from(vec![
+        Span::styled(
+            if view.busy { "Working" } else { "Build" },
+            Style::default().fg(ACCENT),
+        ),
+        Span::raw(format!("  {}", view.model)),
+    ]);
+    frame.render_widget(
+        Paragraph::new(metadata).style(Style::default().fg(FOREGROUND)),
+        Rect::new(editor.x, area.bottom() - 1, editor.width, 1),
+    );
+    if view.pending.is_none() && !view.palette {
+        frame.set_cursor_position((
+            editor.x + cursor_x - scroll_x,
+            editor.y + cursor_y - scroll_y,
+        ));
+    }
+}
+
+fn draw_commands(frame: &mut Frame, view: &View, composer: Rect) {
+    let commands = view.commands();
+    let bounds = frame.area();
+    let height = (commands.len().max(1) as u16 + 2).min(bounds.height);
+    let y = if composer.bottom().saturating_add(height) <= bounds.bottom() {
+        composer.bottom()
+    } else {
+        composer.y.saturating_sub(height).max(bounds.y)
+    };
+    let area = Rect::new(composer.x, y, composer.width.min(54), height);
+    let lines = if commands.is_empty() {
+        vec![Line::styled(
+            " No matching commands",
+            Style::default().fg(MUTED),
+        )]
+    } else {
+        commands
+            .iter()
+            .enumerate()
+            .map(|(index, (_, name, description))| {
+                let selected = index == view.selection;
+                let style = if selected {
+                    Style::default().fg(FOREGROUND).bg(Color::Rgb(41, 54, 74))
+                } else {
+                    Style::default().fg(MUTED)
+                };
+                Line::styled(format!(" {name:<9} {description}"), style)
+            })
+            .collect()
+    };
+    frame.render_widget(Clear, area);
+    frame.render_widget(
+        Paragraph::new(lines)
+            .block(panel(" Commands ").style(Style::default().bg(SURFACE).fg(FOREGROUND))),
+        area,
+    );
+}
+
 fn center(area: Rect, width: u16, height: u16) -> Rect {
     let w = area.width.saturating_mul(width) / 100;
     let h = area.height.saturating_mul(height) / 100;
@@ -433,6 +700,8 @@ mod tests {
             busy: false,
             panels: true,
             palette: false,
+            selection: 0,
+            dismiss_slash: false,
             pending: None,
             scroll: 0,
             status: "Ready".into(),
@@ -455,7 +724,7 @@ mod tests {
                 .map(|c| c.symbol())
                 .collect::<String>();
             assert!(rendered.contains("FORGE"));
-            assert!(rendered.contains("Message"));
+            assert!(rendered.contains("Build"));
         }
     }
     #[test]
