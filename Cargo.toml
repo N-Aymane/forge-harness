@@ -1,6 +1,6 @@
 [package]
 name = "forge-harness"
-version = "0.1.0"
+version = "0.2.0-preview.1"
 edition = "2024"
 rust-version = "1.88"
 description = "A local-first coding agent with explicit approvals and spending controls"

@@ -198,9 +198,10 @@ enum Command {
     Usage,
     Cancel,
     Quit,
+    Update,
 }
 
-const COMMANDS: [(Command, &str, &str); 4] = [
+const COMMANDS: [(Command, &str, &str); 5] = [
     (
         Command::Panels,
         "/panels",
@@ -209,7 +210,14 @@ const COMMANDS: [(Command, &str, &str); 4] = [
     (Command::Usage, "/usage", "Show latest request usage"),
     (Command::Cancel, "/cancel", "Cancel the current turn"),
     (Command::Quit, "/quit", "Exit Forge when idle"),
+    (Command::Update, "/update", "Fetch and update Forge source"),
 ];
+
+enum MenuAction {
+    Handled,
+    Quit,
+    Update,
+}
 
 impl View {
     fn slash_query(&self) -> Option<&str> {
@@ -234,7 +242,7 @@ impl View {
             .collect()
     }
 
-    fn menu_key(&mut self, key: KeyEvent, cancel: &CancellationToken) -> Option<bool> {
+    fn menu_key(&mut self, key: KeyEvent, cancel: &CancellationToken) -> Option<MenuAction> {
         if !self.menu_open() {
             return None;
         }
@@ -250,7 +258,7 @@ impl View {
             }
             KeyCode::Enter if key.modifiers.is_empty() => {
                 let Some(&(command, _, _)) = commands.get(self.selection) else {
-                    return Some(false);
+                    return Some(MenuAction::Handled);
                 };
                 if !self.palette {
                     self.input.clear();
@@ -282,14 +290,18 @@ impl View {
                             cancel.cancel();
                         }
                     }
-                    Command::Quit if !self.busy => return Some(true),
+                    Command::Quit if !self.busy => return Some(MenuAction::Quit),
                     Command::Quit => self.status = "Cancel the current turn before quitting".into(),
+                    Command::Update if !self.busy => return Some(MenuAction::Update),
+                    Command::Update => {
+                        self.status = "Wait for the current turn before updating".into()
+                    }
                 }
             }
             _ if self.palette => {}
             _ => return None,
         }
-        Some(false)
+        Some(MenuAction::Handled)
     }
 }
 
@@ -318,10 +330,21 @@ pub async fn run(mut agent: Agent, mut rx: mpsc::Receiver<UiMessage>) -> Result<
     let mut events = EventStream::new();
     let mut tick = tokio::time::interval(std::time::Duration::from_millis(50));
     let mut task: Option<tokio::task::JoinHandle<()>> = None;
+    let mut update: Option<tokio::task::JoinHandle<Result<String>>> = None;
     loop {
         terminal.draw(|f| draw(f, &view))?;
         tokio::select! {
-            _=tick.tick()=>{if task.as_ref().is_some_and(|t|t.is_finished()){if let Some(t)=task.take(){let _=t.await;}view.busy=false;}}
+            _=tick.tick()=>{
+                if task.as_ref().is_some_and(|t|t.is_finished()){if let Some(t)=task.take(){let _=t.await;}view.busy=false;}
+                if update.as_ref().is_some_and(|job| job.is_finished()) && let Some(job) = update.take() {
+                    let status = match job.await {
+                        Ok(Ok(message)) => message,
+                        Ok(Err(error)) => format!("Update failed: {error:#}"),
+                        Err(error) => format!("Update stopped: {error}"),
+                    };
+                    view.status = status;
+                }
+            }
             Some(message)=rx.recv()=>match message{
                 UiMessage::Event(event)=>view.event(event),
                 UiMessage::Approval{title,preview,reply}=>{view.pending=Some(Pending{title,preview,reply,scroll:0});view.status="Approval required · y approve · n deny".into();}
@@ -333,6 +356,10 @@ pub async fn run(mut agent: Agent, mut rx: mpsc::Receiver<UiMessage>) -> Result<
                     TermEvent::Paste(text)=>if view.pending.is_none()&&!view.palette{view.insert(&text.replace('\r',"").replace('\t',"    "));},
                     TermEvent::Key(key) if matches!(key.kind,KeyEventKind::Press|KeyEventKind::Repeat)=>{
                         if key.modifiers.contains(KeyModifiers::CONTROL)&&key.code==KeyCode::Char('c') {
+                            if update.is_some() {
+                                view.status = "Wait for the Forge update to finish before quitting".into();
+                                continue;
+                            }
                             if view.busy {agent.cancel.cancel();if let Some(p)=view.pending.take(){let _=p.reply.send(Some(false));}view.status="Cancelling…".into();}
                             else{break;}continue;
                         }
@@ -350,8 +377,16 @@ pub async fn run(mut agent: Agent, mut rx: mpsc::Receiver<UiMessage>) -> Result<
                             view.selection = 0;
                             continue;
                         }
-                        if let Some(quit) = view.menu_key(key, &agent.cancel) {
-                            if quit { break; }
+                        if let Some(action) = view.menu_key(key, &agent.cancel) {
+                            match action {
+                                MenuAction::Quit if update.is_none() => break,
+                                MenuAction::Quit => view.status = "Wait for the Forge update to finish before quitting".into(),
+                                MenuAction::Update if update.is_none() => {
+                                    view.status = "Fetching Forge source from GitHub…".into();
+                                    update = Some(tokio::spawn(crate::update::update_source()));
+                                }
+                                MenuAction::Update | MenuAction::Handled => {}
+                            }
                             continue;
                         }
                         match key.code{
@@ -360,7 +395,7 @@ pub async fn run(mut agent: Agent, mut rx: mpsc::Receiver<UiMessage>) -> Result<
                             KeyCode::PageUp=>view.scroll=view.scroll.saturating_add(10),
                             KeyCode::PageDown=>view.scroll=view.scroll.saturating_sub(10),
                             KeyCode::Enter if key.modifiers.intersects(KeyModifiers::ALT|KeyModifiers::SHIFT)=>view.insert("\n"),
-                            KeyCode::Enter if !view.busy&&view.slash_query().is_none()&&!view.input.trim().is_empty()=>{
+                            KeyCode::Enter if update.is_none()&&!view.busy&&view.slash_query().is_none()&&!view.input.trim().is_empty()=>{
                                 let prompt=std::mem::take(&mut view.input);view.cursor=0;view.transcript.push_str(&format!("\nYOU\n{prompt}\n"));view.scroll=0;view.busy=true;
                                 agent.cancel=CancellationToken::new();let worker=agent.clone();
                                 task=Some(tokio::spawn(async move{let _=worker.turn(&prompt).await;}));
@@ -382,6 +417,10 @@ pub async fn run(mut agent: Agent, mut rx: mpsc::Receiver<UiMessage>) -> Result<
         }
     }
     agent.cancel.cancel();
+    if let Some(job) = update {
+        job.abort();
+        let _ = job.await;
+    }
     if let Some(p) = view.pending.take() {
         let _ = p.reply.send(Some(false));
     }

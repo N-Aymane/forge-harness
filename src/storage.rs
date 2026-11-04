@@ -173,6 +173,16 @@ impl Store {
         )?;
         Ok(())
     }
+    /// Read the latest 40 refinement records, newest first, for an existing session.
+    pub fn refinements(&self, id: &str) -> Result<Vec<serde_json::Value>> {
+        self.session(id)?;
+        let connection = self.connect()?;
+        let mut statement = connection.prepare(
+            "SELECT payload FROM history WHERE session=?1 AND kind='refinement_stage' ORDER BY seq DESC LIMIT 40",
+        )?;
+        let rows = statement.query_map([id], |row| row.get::<_, String>(0))?;
+        rows.map(|row| Ok(serde_json::from_str(&row?)?)).collect()
+    }
     pub fn set_budget(&self, scope: &str, target: &str, amount: Option<u64>) -> Result<()> {
         if !matches!(scope, "session" | "project" | "daily") {
             bail!("invalid budget scope");

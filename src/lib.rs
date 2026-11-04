@@ -9,3 +9,4 @@ pub mod runtime;
 pub mod storage;
 pub mod tools;
 pub mod ui;
+mod update;

@@ -12,6 +12,8 @@ A Rust coding agent with a full-screen terminal interface, explicit edit/command
 
 ## What is implemented
 
+**New in v0.2.0-preview.1.** Type `/update` to fast-forward a clean Forge source checkout from GitHub `main`. Use `--refine` for an optional Rust planning pass inspired by Harness2, with per-stage records and Forge's existing spending limits. See the [preview release and platform downloads](https://github.com/N-Aymane/forge-harness/releases/tag/v0.2.0-preview.1).
+
 - Keyboard-driven TUI and scriptable CLI with versioned JSONL events.
 - Streaming provider adapters, repository reading/search, reviewed file writes, and approved shell commands.
 - OS credential-store integration, resumable local sessions, and an SQLite usage ledger.
@@ -70,9 +72,18 @@ The main conversation and multiline composer sit beside collapsible activity and
 | Esc | Deny approval, close palette, or cancel current turn |
 | Ctrl+C | Cancel while running; exit while idle |
 
-Type `/` to open the command list, use the arrow keys to choose a command, and press Enter to run it. The menu includes `/panels`, `/usage`, `/cancel`, and `/quit`. Esc closes the menu.
+Type `/` to open the command list, use the arrow keys to choose a command, and press Enter to run it. The menu includes `/panels`, `/usage`, `/cancel`, `/quit`, and `/update`. Esc closes the menu.
 
 ![Forge slash command menu filtered to the usage command](docs/images/forge-slash-commands.png)
+
+`/update` fetches the public Forge repository's `main` and fast-forwards a clean Forge source checkout. Forge detects builds launched from the checkout's `target` folder. For an installed binary, set `FORGE_SOURCE_DIR` to the absolute path of the Forge clone before launching Forge. After a source update, quit Forge and run `cargo install --path . --locked --force` in that clone, or rebuild using the command you originally used. Then restart Forge with the new binary. Existing binaries need this version of Forge installed once to gain the slash command.
+
+For example, set the source location in PowerShell before launching an installed binary:
+
+```powershell
+$env:FORGE_SOURCE_DIR = 'C:\work\forge-harness'
+forge
+```
 
 Approval dialogs show a unified diff or the exact shell, command, directory, and timeout. File contents are checked again before a proposed write is applied. Denial returns an explicit result to the model. A turn stops after at most 25 model requests.
 
@@ -96,6 +107,12 @@ forge usage --resolve REQUEST_ID --cost 0.0025
 JSONL output has a `version: 1`, `session`, and `type` in every envelope. Types include `started`, `text`, `activity`, `approval_required`, `usage`, `compacted`, `error`, and `finished`. Monetary fields use integer nano-USD. `null` means unknown/unpriced, not zero.
 
 JSON and noninteractive runs never approve actions. They emit `approval_required`, stop, and exit with code **2**. Errors exit with **1**, successful turns with **0**. An interactive plain-text run can ask for `y` on stdin. Resuming a session retains its model alias and original workspace. Stored tool calls with missing outcomes receive an interruption result; they are never automatically replayed.
+
+## Optional task refinement
+
+Run `forge --refine run "Review the parser"` for a single turn or launch the terminal with `forge --refine`. The flag authorizes up to four extra model requests per turn. Forge makes a baseline plan, proposes a revised approach, probes that approach by producing another plan, and compares the results to compose advice for the normal agent. The stages use the selected model without tools and share the turn's normal request and spending limits. A failed stage stops the turn with any completed stages retained for inspection.
+
+Run `forge sessions refinements SESSION_ID` to read the latest stage outputs as JSON. Forge keeps guidance scoped to the current turn and preserves the original task in session history. The comparison produces two plans. Workspace execution happens once, through Forge's normal agent loop. See the original [Harness2 research workflow](https://github.com/google-research/harness2/tree/6868817518876de8fd170c6a8354daca273b6191).
 
 ## Token usage and budgets
 

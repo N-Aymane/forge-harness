@@ -66,7 +66,7 @@ forge --version
 forge doctor
 ```
 
-The version should be `forge 0.1.0`. `cargo install` puts the executable in Cargo's binary directory, normally `~/.cargo/bin`. If that directory is not on PATH, reopen your terminal or invoke the executable directly:
+Check that `forge --version` matches the source or release you installed. `cargo install` puts the executable in Cargo's binary directory, normally `~/.cargo/bin`. If that directory is not on PATH, reopen your terminal or invoke the executable directly:
 
 ```powershell
 # Windows, from the repository:
