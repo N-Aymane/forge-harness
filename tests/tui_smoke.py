@@ -31,7 +31,7 @@ class Provider(http.server.BaseHTTPRequestHandler):
         self.rfile.read(int(self.headers["Content-Length"]))
         type(self).calls += 1
         if self.calls == 1:
-            delta = {"tool_calls": [{"index": 0, "id": "pty-write", "function": {
+            delta = {"content": "I’ll create approved.txt with the requested text.", "tool_calls": [{"index": 0, "id": "pty-write", "function": {
                 "name": "write_file", "arguments": json.dumps({"path": "approved.txt", "content": "approved\n"})}}]}
             reason = "tool_calls"
         else:
@@ -107,7 +107,7 @@ def main():
             until(lambda: b"No requests yet" in captured)
             assert Provider.calls == 0
             os.write(master, b"create approved.txt\r")
-            until(lambda: b"Review action" in captured)
+            until(lambda: b"Review action" in captured and b"y approve" in captured)
             screenshot("02-approval.png", "Forge / review a proposed file change before approval")
             assert not pathlib.Path(workspace, "approved.txt").exists()
             # Resize while reviewing the action, then approve using the keyboard.
@@ -115,7 +115,7 @@ def main():
             if capture:
                 capture.resize(60, 20)
             process.send_signal(signal.SIGWINCH)
-            screenshot("03-narrow.png", "Forge / 60-column approval dialog / actual terminal resize")
+            screenshot("03-narrow.png", "Forge / 60-column inline approval / actual terminal resize")
             os.write(master, b"y")
             until(lambda: pathlib.Path(workspace, "approved.txt").exists() and Provider.calls == 2)
             assert pathlib.Path(workspace, "approved.txt").read_text() == "approved\n"
