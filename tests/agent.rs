@@ -20,16 +20,21 @@ use tokio_util::sync::CancellationToken;
 
 struct Mock {
     responses: Mutex<VecDeque<Completion>>,
+    requests: Mutex<Vec<(bool, Vec<Message>)>>,
 }
 #[async_trait]
 impl Provider for Mock {
     async fn complete(
         &self,
-        _messages: &[Message],
-        _tools: bool,
+        messages: &[Message],
+        tools: bool,
         text: mpsc::Sender<String>,
         _cancel: &CancellationToken,
     ) -> Result<Completion> {
+        self.requests
+            .lock()
+            .unwrap()
+            .push((tools, messages.to_vec()));
         let r = self
             .responses
             .lock()
@@ -101,11 +106,13 @@ fn agent(dir: &std::path::Path, decision: Option<bool>, responses: Vec<Completio
         .create_session(&tools.root().to_string_lossy(), "mock")
         .unwrap();
     Agent {
+        refine: false,
         store,
         session,
         model: model(),
         provider: Arc::new(Mock {
             responses: Mutex::new(responses.into()),
+            requests: Mutex::new(vec![]),
         }),
         tools,
         frontend: Arc::new(Display {
@@ -114,6 +121,54 @@ fn agent(dir: &std::path::Path, decision: Option<bool>, responses: Vec<Completio
         }),
         cancel: CancellationToken::new(),
     }
+}
+
+#[tokio::test]
+async fn refinement_records_tool_free_evidence_and_advises_the_normal_turn() {
+    let d = tempfile::tempdir().unwrap();
+    let mut a = agent(d.path(), Some(false), vec![]);
+    let responses = [
+        "baseline",
+        "candidate",
+        "comparison plan",
+        "verify inputs first",
+        "Done.",
+    ]
+    .into_iter()
+    .map(|text| Completion {
+        text: text.into(),
+        ..response(vec![])
+    })
+    .collect();
+    let mock = Arc::new(Mock {
+        responses: Mutex::new(responses),
+        requests: Mutex::new(vec![]),
+    });
+    a.provider = mock.clone();
+    a.refine = true;
+    a.initialize(None).await.unwrap();
+    assert_eq!(a.turn("Check the parser").await.unwrap(), "complete");
+
+    let requests = mock.requests.lock().unwrap();
+    assert_eq!(
+        requests.iter().map(|(tools, _)| *tools).collect::<Vec<_>>(),
+        [false, false, false, false, true]
+    );
+    assert!(requests[3].1[1].text.contains("comparison plan"));
+    assert!(
+        requests[4]
+            .1
+            .last()
+            .unwrap()
+            .text
+            .contains("verify inputs first")
+    );
+    let context = a.store.context(&a.session).unwrap();
+    assert_eq!(context[1].text, "Check the parser");
+    assert_eq!(a.store.ledger().unwrap().len(), 5);
+    let records = a.store.refinements(&a.session).unwrap();
+    assert_eq!(records.len(), 4);
+    assert_eq!(records[0]["stage"], "compose");
 }
 
 #[tokio::test]
@@ -251,6 +306,7 @@ async fn unattended_stop_then_resume_never_replays_call() {
     assert!(!d.path().join("hello.txt").exists());
     a.provider = Arc::new(Mock {
         responses: Mutex::new(vec![response(vec![])].into()),
+        requests: Mutex::new(vec![]),
     });
     a.frontend = Arc::new(Display {
         decision: Some(true),

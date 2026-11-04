@@ -33,6 +33,9 @@ struct Cli {
     workspace: PathBuf,
     #[arg(short, long, global = true)]
     model: Option<String>,
+    /// Compare two plans and refine task guidance before each turn (four additional model requests).
+    #[arg(long, global = true)]
+    refine: bool,
     #[command(subcommand)]
     command: Option<Command>,
 }
@@ -87,7 +90,13 @@ enum Command {
 #[derive(Subcommand)]
 enum SessionCommand {
     List,
-    Resume { id: String },
+    Resume {
+        id: String,
+    },
+    /// Print the latest recorded refinement stages as JSON, newest first.
+    Refinements {
+        id: String,
+    },
 }
 #[derive(Subcommand)]
 enum AuthCommand {
@@ -336,6 +345,12 @@ pub async fn run() -> Result<()> {
                 println!("{}  {}  {}  {}", s.id, s.created, s.model, s.project);
             }
         }
+        Some(Command::Sessions {
+            command: SessionCommand::Refinements { id },
+        }) => println!(
+            "{}",
+            serde_json::to_string_pretty(&store.refinements(&id)?)?
+        ),
         Some(Command::Run {
             prompt,
             json,
@@ -350,7 +365,7 @@ pub async fn run() -> Result<()> {
                 json,
                 interactive: !json && std::io::stdin().is_terminal(),
             });
-            let agent = build(
+            let mut agent = build(
                 &config,
                 store,
                 &cli.workspace,
@@ -358,6 +373,7 @@ pub async fn run() -> Result<()> {
                 session.as_deref(),
                 frontend,
             )?;
+            agent.refine = cli.refine;
             let preferences = crate::config::project(agent.tools.root())?;
             agent
                 .initialize(preferences.instructions.as_deref())
@@ -386,7 +402,7 @@ pub async fn run() -> Result<()> {
                 _ => None,
             };
             let (frontend, rx) = crate::ui::channel();
-            let agent = build(
+            let mut agent = build(
                 &config,
                 store,
                 &cli.workspace,
@@ -394,6 +410,7 @@ pub async fn run() -> Result<()> {
                 resume.as_deref(),
                 frontend,
             )?;
+            agent.refine = cli.refine;
             let preferences = crate::config::project(agent.tools.root())?;
             agent
                 .initialize(preferences.instructions.as_deref())
@@ -452,6 +469,7 @@ fn build(
         None => store.create_session(&tools.root().to_string_lossy(), alias)?,
     };
     Ok(Agent {
+        refine: false,
         store,
         session,
         model: model.clone(),
