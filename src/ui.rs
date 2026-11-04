@@ -504,7 +504,12 @@ const ACCENT: Color = Color::Rgb(103, 159, 241);
 
 // The terminal supplies the glyphs. The lockup uses square block cells so it
 // travels with Forge across terminal fonts and needs no graphics protocol.
-const ANVIL: [&str; 4] = ["▐████████▌ ", " ▀██████▀  ", "   ▐██▌    ", "  ▄████▄   "];
+const ANVIL: [&str; 4] = [
+    "▀▀█████████▌  ",
+    "  ▀███████▀   ",
+    "     ███      ",
+    "   ▄█████▄    ",
+];
 const WORDMARK: [&str; 4] = [
     "█▀▀▀  █▀▀█  █▀▀█  █▀▀▀  █▀▀▀",
     "█▄▄   █  █  █▄▄█  █ ▄▄  █▄▄ ",
