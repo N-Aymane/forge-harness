@@ -31,7 +31,7 @@ class Provider(http.server.BaseHTTPRequestHandler):
         self.rfile.read(int(self.headers["Content-Length"]))
         type(self).calls += 1
         if self.calls == 1:
-            delta = {"tool_calls": [{"index": 0, "id": "pty-write", "function": {
+            delta = {"content": "I’ll create approved.txt with the requested text.", "tool_calls": [{"index": 0, "id": "pty-write", "function": {
                 "name": "write_file", "arguments": json.dumps({"path": "approved.txt", "content": "approved\n"})}}]}
             reason = "tool_calls"
         else:

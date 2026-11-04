@@ -672,7 +672,7 @@ fn draw_home(frame: &mut Frame, view: &View, composer_height: u16) {
         composer_height.min(available),
     );
     draw_composer(frame, view, composer);
-    if composer.bottom() < area.bottom() {
+    if !view.menu_open() && composer.bottom() < area.bottom() {
         let hint = if width >= 52 {
             "/ commands   Ctrl+P palette   Enter send"
         } else {
@@ -685,7 +685,10 @@ fn draw_home(frame: &mut Frame, view: &View, composer_height: u16) {
             Rect::new(x, composer.bottom(), width, 1),
         );
     }
-    if composer.bottom().saturating_add(1) < area.bottom() && view.status != "Ready" {
+    if !view.menu_open()
+        && composer.bottom().saturating_add(1) < area.bottom()
+        && view.status != "Ready"
+    {
         frame.render_widget(
             Paragraph::new(view.status.as_str()).style(Style::default().fg(MUTED)),
             Rect::new(x, composer.bottom() + 1, width, 1),
