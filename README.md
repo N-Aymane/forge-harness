@@ -23,6 +23,31 @@ Validation passed 31 active Linux Rust tests, the real-terminal approval/resize/
 
 ## Install Forge
 
+### Install with curl
+
+For Linux x64 or Apple Silicon macOS, download the installer and run it as your user:
+
+```sh
+curl -fL https://raw.githubusercontent.com/N-Aymane/forge-harness/design/forge-workbench/scripts/install.sh -o forge-install.sh
+sh forge-install.sh
+"$HOME/.local/bin/forge" --version
+```
+
+The installer verifies the published archive and puts the executable in `~/.local/bin`. Add that directory to your `PATH` or set `FORGE_INSTALL_DIR` before running the script to choose a different destination.
+
+### Install with pip
+
+With Python 3.9 or newer and Git, run this in an activated virtual environment:
+
+```sh
+python -m pip install "git+https://github.com/N-Aymane/forge-harness.git@design/forge-workbench"
+forge --version
+```
+
+On the first launch, the pip launcher downloads and verifies the native Forge binary, then caches it under `~/.forge-launcher`. It supports Windows x64, Linux x64, and Apple Silicon macOS.
+
+Both installers use **v0.2.0-preview.1**. To try the redesigned workbench in this branch, [build from source](#build-from-source). Get [config.example.toml](https://github.com/N-Aymane/forge-harness/blob/v0.2.0-preview.1/config.example.toml), then follow [Configure a model](#configure-a-model).
+
 ### Download a release
 
 Download and extract the archive for your platform from the [v0.2.0-preview.1 release](https://github.com/N-Aymane/forge-harness/releases/tag/v0.2.0-preview.1). The release has Windows x64, Linux x64, and Apple Silicon macOS builds. Compare your archive’s SHA-256 with `SHA256SUMS` from the same release. It also ships `config.example.toml`. This release predates the workbench shown in the screenshots above. Build the review branch below to try that interface.
