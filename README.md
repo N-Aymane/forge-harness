@@ -8,6 +8,8 @@ A Rust coding agent with a full-screen terminal interface, explicit edit/command
 
 Forge opens to a centered pixel anvil, a block-letter wordmark, and one multiline composer. The working layout appears when you send your first prompt or resume a session with history.
 
+![Forge startup with a blue pixel anvil and a centered composer](docs/images/forge-home.png)
+
 ## What is implemented
 
 **New in v0.2.0-preview.1.** Type `/update` to fast-forward a clean Forge source checkout from GitHub `main`. Use `--refine` for an optional Rust planning pass inspired by Harness2, with per-stage records and Forge's existing spending limits. See the [preview release and platform downloads](https://github.com/N-Aymane/forge-harness/releases/tag/v0.2.0-preview.1).
@@ -55,6 +57,8 @@ forge --model claude
 
 The working view keeps the conversation above the composer and shows recent tool activity and request usage in a collapsible side rail. Narrow terminals hide the rail automatically. Proposed edits appear as colored inline diffs with keyboard approval controls below. Shell approvals show the command, shell, and working directory in the same review area.
 
+![Forge workbench with a proposed file diff, approval controls, and the activity and usage rail](docs/images/forge-inline-review.png)
+
 | Key | Action |
 | --- | --- |
 | Enter | Send a message when idle |
@@ -72,7 +76,9 @@ The working view keeps the conversation above the composer and shows recent tool
 
 Type `/` to open the command list, use the arrow keys to choose a command, and press Enter to run it. The menu includes `/panels`, `/usage`, `/cancel`, `/quit`, and `/update`. Esc closes the menu.
 
-The Linux CI job captures startup, slash filtering, inline approval, terminal resize, and the completed turn using a local mock provider. Download the `forge-test-screenshots` artifact from the [CI run for the branch](https://github.com/N-Aymane/forge-harness/actions/workflows/ci.yml).
+![Forge startup with the slash menu filtered to the usage command](docs/images/forge-slash-commands.png)
+
+These screenshots come from the terminal smoke test. The Linux CI job captures startup, slash filtering, inline approval, terminal resize, and the completed turn using a local mock provider. Download the `forge-test-screenshots` artifact from the [redesign CI run](https://github.com/N-Aymane/forge-harness/actions/runs/41868088577).
 
 `/update` fetches the public Forge repository's `main` and fast-forwards a clean Forge source checkout. Forge detects builds launched from the checkout's `target` folder. For an installed binary, set `FORGE_SOURCE_DIR` to the absolute path of the Forge clone before launching Forge. After a source update, quit Forge and run `cargo install --path . --locked --force` in that clone, or rebuild using the command you originally used. Then restart Forge with the new binary. Existing binaries need this version of Forge installed once to gain the slash command.
 
