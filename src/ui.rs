@@ -83,7 +83,6 @@ struct View {
     pending: Option<Pending>,
     scroll: u16,
     status: String,
-    session: String,
     model: String,
     workspace: String,
 }
@@ -103,7 +102,6 @@ impl View {
             pending: None,
             scroll: 0,
             status: "Ready".into(),
-            session: agent.session.clone(),
             model: agent.model.model.clone(),
             workspace: agent.tools.root().display().to_string(),
         }
@@ -365,8 +363,8 @@ pub async fn run(mut agent: Agent, mut rx: mpsc::Receiver<UiMessage>) -> Result<
                         }
                         if let Some(p)=view.pending.as_mut(){
                             match key.code{
-                                KeyCode::Char('y')=>{if let Some(p)=view.pending.take(){let _=p.reply.send(Some(true));}}
-                                KeyCode::Char('n')|KeyCode::Esc=>{if let Some(p)=view.pending.take(){let _=p.reply.send(Some(false));}}
+                                KeyCode::Char('y') if key.kind == KeyEventKind::Press=>{if let Some(p)=view.pending.take(){let _=p.reply.send(Some(true));}}
+                                KeyCode::Char('n')|KeyCode::Esc if key.kind == KeyEventKind::Press=>{if let Some(p)=view.pending.take(){let _=p.reply.send(Some(false));}}
                                 KeyCode::PageDown|KeyCode::Down=>p.scroll=p.scroll.saturating_add(5),
                                 KeyCode::PageUp|KeyCode::Up=>p.scroll=p.scroll.saturating_sub(5),
                                 _=>{},
@@ -438,7 +436,7 @@ fn panel(title: &str) -> Block<'_> {
 }
 fn draw(frame: &mut Frame, view: &View) {
     let area = frame.area();
-    let composer_height = view.input.lines().count().saturating_add(2).clamp(3, 7) as u16;
+    let composer_height = view.input.split('\n').count().saturating_add(2).clamp(3, 7) as u16;
     frame.render_widget(
         Block::default().style(Style::default().bg(BACKGROUND).fg(FOREGROUND)),
         area,
@@ -447,6 +445,11 @@ fn draw(frame: &mut Frame, view: &View) {
         draw_home(frame, view, composer_height);
         return;
     }
+    let composer_height = if view.pending.is_some() {
+        composer_height.min(area.height.saturating_sub(10))
+    } else {
+        composer_height
+    };
     let rows = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -456,111 +459,184 @@ fn draw(frame: &mut Frame, view: &View) {
             Constraint::Length(1),
         ])
         .split(area);
+    let header = Line::from(vec![
+        Span::styled(" ▰ FORGE", Style::default().fg(ACCENT)),
+        Span::styled(
+            format!("  │  {}  │  {}", view.workspace, view.model),
+            Style::default().fg(MUTED),
+        ),
+    ]);
     frame.render_widget(
-        Paragraph::new(Line::from(vec![
-            Span::styled(" FORGE ", Style::default().fg(Color::Cyan)),
-            Span::raw(format!(" / {} · {}", view.model, view.workspace)),
-        ])),
+        Paragraph::new(header).block(
+            Block::default()
+                .borders(Borders::BOTTOM)
+                .border_style(Style::default().fg(DIVIDER)),
+        ),
         rows[0],
     );
-    let cols = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(if view.panels && area.width >= 100 {
-            vec![Constraint::Percentage(73), Constraint::Percentage(27)]
+
+    let cols = Layout::horizontal([
+        Constraint::Min(0),
+        Constraint::Length(if view.panels && area.width >= 100 {
+            29
         } else {
-            vec![Constraint::Percentage(100)]
+            0
+        }),
+    ])
+    .split(rows[1]);
+    let body = Layout::vertical([
+        Constraint::Min(0),
+        Constraint::Length(if view.pending.is_some() {
+            cols[0]
+                .height
+                .saturating_sub(2)
+                .min(15)
+                .max(cols[0].height.min(4))
+        } else {
+            0
+        }),
+    ])
+    .split(cols[0]);
+    let transcript = view
+        .transcript
+        .lines()
+        .map(|line| match line {
+            "YOU" => Line::styled("YOU", Style::default().fg(MUTED)),
+            "FORGE" => Line::styled("FORGE", Style::default().fg(ACCENT)),
+            _ => Line::raw(line),
         })
-        .split(rows[1]);
-    let conversation = Paragraph::new(view.transcript.as_str())
-        .block(panel(" Conversation "))
-        .wrap(Wrap { trim: false });
+        .collect::<Vec<_>>();
+    let conversation = Paragraph::new(transcript).wrap(Wrap { trim: false });
     let height = conversation
-        .line_count(cols[0].width)
+        .line_count(body[0].width)
         .min(u16::MAX as usize) as u16;
     let offset = height
-        .saturating_sub(cols[0].height.saturating_sub(2))
+        .saturating_sub(body[0].height)
         .saturating_sub(view.scroll);
-    frame.render_widget(conversation.scroll((offset, 0)), cols[0]);
-    if cols.len() > 1 {
-        let side = Layout::default()
-            .constraints([Constraint::Percentage(55), Constraint::Percentage(45)])
-            .split(cols[1]);
-        let activity = view
-            .activity
-            .iter()
-            .rev()
-            .take(12)
-            .rev()
-            .cloned()
-            .collect::<Vec<_>>()
-            .join("\n\n");
-        frame.render_widget(
-            Paragraph::new(activity)
-                .block(panel(" Activity "))
-                .wrap(Wrap { trim: false }),
-            side[0],
-        );
-        frame.render_widget(
-            Paragraph::new(view.usage.as_str())
-                .block(panel(" Request usage · USD estimate "))
-                .wrap(Wrap { trim: false }),
-            side[1],
-        );
+    frame.render_widget(conversation.scroll((offset, 0)), body[0]);
+    if cols[1].width > 0 {
+        draw_activity(frame, view, cols[1]);
     }
+
     draw_composer(frame, view, rows[2]);
+    let footer = if area.width >= 90 {
+        format!(
+            " {}  │  / commands  Ctrl+P palette  Tab panels",
+            view.status
+        )
+    } else {
+        format!(" {}", view.status)
+    };
     frame.render_widget(
-        Paragraph::new(format!(
-            " {} · {} · Ctrl+P commands · PgUp/PgDn scroll",
-            view.status,
-            &view.session[..view.session.len().min(8)]
-        ))
-        .style(Style::default().fg(Color::DarkGray)),
+        Paragraph::new(footer).style(Style::default().fg(MUTED)),
         rows[3],
     );
-    if let Some(p) = &view.pending {
-        let rect = center(area, 90, 85);
-        frame.render_widget(Clear, rect);
-        frame.render_widget(
-            Paragraph::new(format!(
-                "{}\n\ny approve · n deny · ↑/↓ scroll\n\n{}",
-                p.title, p.preview
-            ))
-            .block(panel(" Review action ").border_style(Style::default().fg(Color::Cyan)))
-            .wrap(Wrap { trim: false })
-            .scroll((p.scroll, 0)),
-            rect,
-        );
+    if let Some(pending) = &view.pending {
+        draw_review(frame, pending, body[1]);
     } else if view.menu_open() {
         draw_commands(frame, view, rows[2]);
     }
+}
+
+fn draw_activity(frame: &mut Frame, view: &View, area: Rect) {
+    let rail = Block::default()
+        .borders(Borders::LEFT)
+        .border_style(Style::default().fg(DIVIDER));
+    let inner = rail.inner(area);
+    frame.render_widget(rail, area);
+    let rows =
+        Layout::vertical([Constraint::Percentage(55), Constraint::Percentage(45)]).split(inner);
+    let activity = view
+        .activity
+        .iter()
+        .rev()
+        .take(12)
+        .map(String::as_str)
+        .collect::<Vec<_>>()
+        .join("\n");
+    for (title, content, row) in [
+        (" ACTIVITY", activity.as_str(), rows[0]),
+        (" REQUEST USAGE", view.usage.as_str(), rows[1]),
+    ] {
+        frame.render_widget(
+            Paragraph::new(content)
+                .block(Block::default().title(Line::styled(title, Style::default().fg(ACCENT))))
+                .wrap(Wrap { trim: false }),
+            row,
+        );
+    }
+}
+
+fn draw_review(frame: &mut Frame, pending: &Pending, area: Rect) {
+    let rows = Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).split(area);
+    let lines = pending
+        .preview
+        .lines()
+        .map(|line| {
+            let color = if pending.title.starts_with("Apply file change:") {
+                match line.as_bytes().first() {
+                    Some(b'+') => Color::Rgb(151, 207, 154),
+                    Some(b'-') => Color::Rgb(239, 152, 152),
+                    Some(b'@') => MUTED,
+                    _ => FOREGROUND,
+                }
+            } else {
+                FOREGROUND
+            };
+            Line::styled(line, Style::default().fg(color))
+        })
+        .collect::<Vec<_>>();
+    let border = panel(" Review action ").border_style(Style::default().fg(ACCENT));
+    let inner = border.inner(rows[0]);
+    let preview = Paragraph::new(lines).wrap(Wrap { trim: false });
+    let line_count = preview.line_count(inner.width).min(u16::MAX as usize) as u16;
+    let scroll = pending
+        .scroll
+        .min(line_count.saturating_sub(inner.height.saturating_sub(1)));
+    frame.render_widget(border, rows[0]);
+    let content = Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).split(inner);
+    frame.render_widget(Paragraph::new(pending.title.as_str()), content[0]);
+    frame.render_widget(preview.scroll((scroll, 0)), content[1]);
+    let controls = if area.width >= 37 {
+        " y approve   n deny   ↑/↓ scroll"
+    } else {
+        " y approve  n deny"
+    };
+    frame.render_widget(
+        Paragraph::new(controls).style(Style::default().fg(ACCENT)),
+        rows[1],
+    );
 }
 
 const BACKGROUND: Color = Color::Rgb(10, 10, 10);
 const SURFACE: Color = Color::Rgb(29, 29, 29);
 const FOREGROUND: Color = Color::Rgb(232, 232, 232);
 const MUTED: Color = Color::Rgb(143, 143, 143);
-const ACCENT: Color = Color::Rgb(103, 159, 241);
+const ACCENT: Color = Color::Rgb(110, 170, 255);
+const DIVIDER: Color = Color::Rgb(56, 63, 73);
 
 // The terminal supplies the glyphs. The lockup uses square block cells so it
 // travels with Forge across terminal fonts and needs no graphics protocol.
-const ANVIL: [&str; 4] = [
-    "▀▀█████████▌  ",
-    "  ▀███████▀   ",
-    "     ███      ",
-    "   ▄█████▄    ",
+const ANVIL: [&str; 5] = [
+    "▀▀████████████▌   ",
+    "  ▀██████████▀    ",
+    "      ████        ",
+    "     ▄████▄       ",
+    "    ▀▀▀▀▀▀▀▀      ",
 ];
-const WORDMARK: [&str; 4] = [
-    "█▀▀▀  █▀▀█  █▀▀█  █▀▀▀  █▀▀▀",
-    "█▄▄   █  █  █▄▄█  █ ▄▄  █▄▄ ",
-    "█     █  █  █ ▀▄  █  █  █   ",
-    "▀     ▀▀▀▀  ▀  ▀  ▀▀▀▀  ▀▀▀▀",
+const WORDMARK: [&str; 5] = [
+    "████  ████  ████  ████  ████",
+    "█     █  █  █  █  █     █   ",
+    "███   █  █  ███▀  █ ██  ███ ",
+    "█     █  █  █  █  █  █  █   ",
+    "█     ████  █  █  ████  ████",
 ];
 
 fn draw_home(frame: &mut Frame, view: &View, composer_height: u16) {
     let area = frame.area();
-    let width = area.width.saturating_sub(4).min(94);
-    let large_logo = width >= 44 && area.height >= 14;
-    let logo_height = if large_logo { 4 } else { 1 };
+    let width = area.width.saturating_sub(4).min(86);
+    let large_logo = width >= 46 && area.height >= 16;
+    let logo_height = if large_logo { ANVIL.len() as u16 } else { 1 };
     let height = logo_height + composer_height + 4;
     let x = area.x + (area.width - width) / 2;
     let y = area.y + area.height.saturating_sub(height) * 2 / 5;
@@ -570,7 +646,7 @@ fn draw_home(frame: &mut Frame, view: &View, composer_height: u16) {
             .zip(WORDMARK)
             .map(|(anvil, word)| {
                 Line::from(vec![
-                    Span::styled(*anvil, Style::default().fg(MUTED)),
+                    Span::styled(*anvil, Style::default().fg(ACCENT)),
                     Span::styled(word, Style::default().fg(FOREGROUND)),
                 ])
             })
@@ -630,7 +706,13 @@ fn draw_composer(frame: &mut Frame, view: &View, area: Rect) {
             .style(Style::default().fg(ACCENT)),
         Rect::new(area.x, area.y, 1, area.height),
     );
-    let editor = Rect::new(area.x + 2, area.y, area.width - 3, area.height - 1);
+    let padding = u16::from(area.height >= 3);
+    let editor = Rect::new(
+        area.x + 2,
+        area.y + padding,
+        area.width - 3,
+        area.height - 1 - padding,
+    );
     let before = &view.input[..view.cursor];
     let cursor_y = before.bytes().filter(|&byte| byte == b'\n').count();
     let cursor_y = cursor_y.min(u16::MAX as usize) as u16;
@@ -715,17 +797,6 @@ fn draw_commands(frame: &mut Frame, view: &View, composer: Rect) {
     );
 }
 
-fn center(area: Rect, width: u16, height: u16) -> Rect {
-    let w = area.width.saturating_mul(width) / 100;
-    let h = area.height.saturating_mul(height) / 100;
-    Rect::new(
-        area.x + (area.width - w) / 2,
-        area.y + (area.height - h) / 2,
-        w,
-        h,
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -744,7 +815,6 @@ mod tests {
             pending: None,
             scroll: 0,
             status: "Ready".into(),
-            session: "12345678".into(),
             model: "test".into(),
             workspace: "repo".into(),
         }
@@ -787,7 +857,7 @@ mod tests {
         let mut v = fixture();
         let (tx, _) = oneshot::channel();
         v.pending = Some(Pending {
-            title: "Apply patch".into(),
+            title: "Apply file change: test.txt".into(),
             preview: "-before\n+after".into(),
             reply: tx,
             scroll: 0,
@@ -803,6 +873,9 @@ mod tests {
             .collect::<String>();
         assert!(content.contains("Review action"));
         assert!(content.contains("+after"));
+        assert!(content.contains("y approve"));
+        assert!(content.contains("REQUEST USAGE"));
+        assert!(content.contains("hello"));
         v.pending = None;
         v.palette = true;
         t.draw(|f| draw(f, &v)).unwrap();
