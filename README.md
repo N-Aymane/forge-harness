@@ -21,32 +21,57 @@ Forge opens to a centered pixel anvil, a block-letter wordmark, and one multilin
 
 Validation passed 31 active Linux Rust tests, the real-terminal approval/resize/cleanup smoke test, and Clippy on Rust 1.88 and stable. Native Windows, Linux, and macOS CI passed their test suites, Clippy, and optimized release builds. See [CI results and binary artifacts](https://github.com/N-Aymane/forge-harness/actions/runs/41736340060). Real paid-provider tests are opt-in.
 
-## Build and configure
+## Install Forge
 
-Install stable Rust (1.88 or later) and the native build tools for your platform. Linux builds also require `pkg-config` and the D-Bus development headers (`libdbus-1-dev` on Ubuntu) for Secret Service credentials. Windows normally uses the MSVC Rust toolchain and Visual Studio C++ build tools; GNU Rust with MinGW also works.
+### Download a release
+
+Download and extract the archive for your platform from the [v0.2.0-preview.1 release](https://github.com/N-Aymane/forge-harness/releases/tag/v0.2.0-preview.1). The release has Windows x64, Linux x64, and Apple Silicon macOS builds. Compare your archive’s SHA-256 with `SHA256SUMS` from the same release. It also ships `config.example.toml`. This release predates the workbench shown in the screenshots above. Build the review branch below to try that interface.
+
+| Platform | Verify the extracted executable |
+| --- | --- |
+| Windows PowerShell | `.\forge.exe --version` |
+| Linux or macOS | `./forge --version` |
+
+Add the folder containing the executable to your `PATH` to use the `forge` commands below from any repository. Alternatively, substitute the full executable path.
+
+### Build from source
+
+You need Git and Rust 1.88 or later. On Windows, install Visual Studio Build Tools with **Desktop development with C++**. On Ubuntu or Debian, install `build-essential`, `pkg-config`, and `libdbus-1-dev`. On macOS, install the command-line tools with `xcode-select --install`. See the [platform setup guide](docs/SETUP.md) for details.
 
 ```sh
-cargo build --locked --release
-# Install the binary into your Cargo bin directory:
+git clone --branch design/forge-workbench https://github.com/N-Aymane/forge-harness.git
+cd forge-harness
 cargo install --path . --locked
-forge doctor
+forge --version
 ```
 
-In this workspace, an isolated Windows toolchain lives under `.tools/`; use `./scripts/dev.ps1 build --release` if Rust is not on PATH. This directory is ignored and is not part of the product.
+Cargo installs the binary in its bin directory, normally `~/.cargo/bin`. If `forge` is missing or still points to an older binary, check your `PATH` and reopen the terminal. Use `cargo install --path . --locked --force` when replacing an existing source install with a build that has the same version.
 
-Copy `config.example.toml` to the configuration path printed by `forge doctor`. Replace the example model IDs and limits with values supported by your provider. Select `default_model`, or pass `--model ALIAS`. There are no built-in model or pricing assumptions and no automatic provider fallback.
+## Configure a model
 
-For credentials, either set the model's `key_env` variable or remove that field and run:
+1. Run `forge doctor` and find the path labeled `config`. Create its parent directory if needed and copy `config.example.toml` to that exact path. Keep this file outside your project.
+2. Choose a model alias such as `primary` (OpenAI Responses), `claude` (Anthropic Messages), or `local` (OpenAI-compatible Chat Completions). Set `default_model` to that alias and fill in the actual model ID, base URL, and token limits. For compatible servers, use the API base URL, typically ending in `/v1`. Forge appends `/chat/completions`.
+3. Choose how to provide the API key. For the OS credential store, remove `key_env` from that model’s entry and run `forge auth add primary`, replacing `primary` with your alias. The prompt hides the key. For headless use, keep `key_env` and supply that environment variable in the shell launching Forge. Keep API keys out of TOML and Git.
+4. Run `forge models` to check the alias and `forge doctor` again to check configuration and credential availability. `ready (not contacted)` means the local checks passed. The first prompt tests provider access and may incur charges.
+
+If you want a local spending guard before your first request, configure verified provider pricing for the alias, then run `forge budget set daily 1.00` for a $1 USD daily limit. An active budget blocks requests from unpriced models. See [Token usage and budgets](#token-usage-and-budgets) for how reservations work.
+
+## Run your first coding session
+
+Run Forge inside the repository you want to work on, or pass its path explicitly.
 
 ```sh
-forge auth add primary
-# Hidden prompt writes directly to the OS credential store.
-forge auth remove primary
+forge -C "/path/to/your/repository"
 ```
 
-Windows uses Credential Manager; macOS uses Keychain; Linux uses the desktop Secret Service. A headless system without that service should use environment variables. Do not put keys in TOML. Keys are not command-line arguments. Each alias has its own credential entry.
+On Windows, for example, run `forge -C "C:\work\my-project"`. To select a configured alias for this launch, add `--model ALIAS`.
 
-`--home PATH` overrides both config and data locations for a portable installation. `-C PATH` selects a workspace. An optional `.forge.toml` accepts only `instructions`; project files cannot select credentials, endpoints, shells, or permission settings.
+1. Start with a read-only task such as “Explain how this repository is organized and suggest where to add a regression test.” Press Enter to send it.
+2. Ask for a small change. Read the proposed diff, or check the exact command, shell, and working directory if Forge asks to run a command. Press **y** to approve that action or **n** to deny it. Use the arrow keys to scroll the review.
+3. Type `/usage` and press Enter to see the latest request usage. Press **Tab** to toggle the activity and usage rail in a wide terminal.
+4. Exit with `/quit` while idle. To return later, use `forge sessions list` and then `forge sessions resume SESSION_ID`. To run one prompt from a script, use `forge -C "/path/to/your/repository" run "Explain the test setup" --json`. JSON mode stops with exit code **2** if Forge needs approval.
+
+Use `--home PATH` on every command if you want a separate configuration and session database. Use a workspace `.forge.toml` with an `instructions` field for repository-specific guidance.
 
 ## Terminal interface
 
